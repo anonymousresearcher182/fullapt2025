@@ -1,4 +1,4 @@
-# Dual-Domain APT Dataset
+# FullAPT2025: Dual-Domain APT Attack Dataset
 
 This repository presents the documentation related to the production of FullAPT2025, the ultimate cybersecurity dataset based on data collection of emulated APT attacks.
 
