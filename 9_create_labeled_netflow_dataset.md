@@ -25,6 +25,9 @@
 - Configurable: User-defined via interactive wizard
 - Causation types: `possible_cause`, `possible_effect`, `simultaneous`
 
+![Figure 9.2: Temporal Causation Window](figures/figure_9_2_temporal_window.png)
+**Figure 9.2**: Timeline diagram illustrating the temporal causation correlation window. A Sysmon seed event (red vertical line) establishes a ±10 second correlation window (shaded region). NetFlow events are classified as 'possible_cause' (blue, ending before seed event), 'possible_effect' (green, starting after seed event), or 'simultaneous' (purple, overlapping with seed event). Events outside the window (gray) are not correlated. The configurable window size balances precision (tight window) versus recall (loose window).
+
 **Computer Matching**:
 - Requires seed_event.Computer ∈ netflow.host_hostname
 - Case-insensitive hostname matching
@@ -34,6 +37,9 @@
 1. **Tier 0 - Attacker IP Baseline**: Flow involves attacker IP (always x-marked, bypasses all filtering)
 2. **Tier 1 - Direct NetFlow Attribution**: Temporal + computer correlation with seed events
 3. **Tier 2 - Sub-NetFlow Attribution**: Sub-flow correlation using community IDs
+
+![Figure 9.1: Three-Tier NetFlow Labeling System](figures/figure_9_1_three_tier_labeling.png)
+**Figure 9.1**: Hierarchical diagram showing the three-tier NetFlow labeling system. Tier 0 (top, red) automatically marks all flows involving the attacker IP, bypassing all filters. Tier 1 (middle, orange) uses temporal causation and computer matching to correlate flows with Sysmon seed events within the correlation window. Tier 2 (bottom, yellow) propagates labels to related sub-flows using network community IDs. The pyramid structure indicates decreasing confidence from Tier 0 (highest) to Tier 2 (lowest), with flow counts increasing at each tier.
 
 ## Usage
 
@@ -273,6 +279,11 @@ malicious,exfiltration,T1041,ghi789...,1748129089316,10.1.0.5,192.168.0.4,tcp,..
 
 ## Filtering Logic
 
+The filtering system applies a hierarchical priority scheme to reduce false positives while preserving all attacker-related network activity.
+
+![Figure 9.4: IP Scope Filtering Logic](figures/figure_9_4_ip_filtering.png)
+**Figure 9.4**: Flowchart showing the priority-based filtering logic for NetFlow events. The algorithm first checks for attacker IP involvement (Priority 1 - auto-whitelist, bypasses all filters). If not present, it sequentially applies ICMP filtering (Priority 2), UDP persistence filtering (Priority 3), and optional TCP/DC filtering (Priority 4). Each filter can mark events as 'none' (filtered out) or allow them to proceed to x-marking. This hierarchical approach eliminates benign persistent connections while preserving attack-related flows.
+
 ### Priority 1: Attacker IP Whitelist
 **Highest Priority** - Bypasses ALL other filtering rules
 ```python
@@ -309,6 +320,11 @@ if protocol == 'tcp' and filter_dc_tcp and attacker_ip NOT in (source_ips or des
 ## Causality Types
 
 ### Temporal Relationship Classification
+
+The correlation engine classifies temporal relationships between Sysmon seed events and NetFlow events to distinguish causation direction and identify simultaneous activities.
+
+![Figure 9.6: Causality Types Diagram](figures/figure_9_6_causality_types.png)
+**Figure 9.6**: Temporal relationship classification diagram showing the three causality types. The diagram uses overlapping timeline bars to illustrate: 'possible_cause' (NetFlow ends before seed event starts, suggesting network activity triggered host event), 'possible_effect' (NetFlow starts after seed event ends, suggesting host event triggered network activity), and 'simultaneous' (timelines overlap, indicating concurrent activity). Each type has different analytical implications for understanding attack execution sequences.
 **possible_cause** (NetFlow → Seed Event):
 - NetFlow END timestamp < Seed Event timestamp
 - Network activity likely caused or triggered the host event
@@ -327,6 +343,12 @@ if protocol == 'tcp' and filter_dc_tcp and attacker_ip NOT in (source_ips or des
 ## Timeline Visualizations
 
 ### Multi-Track Timeline (NetFlow by Tactic)
+
+The multi-track timeline separates NetFlow events by MITRE ATT&CK tactic, providing a clear view of attack phase progression over time.
+
+![Figure 9.7: Multi-Track Timeline Visualization](figures/figure_9_7_multitrack_timeline.png)
+**Figure 9.7**: Multi-track timeline showing NetFlow events separated by MITRE ATT&CK tactic. Each horizontal track represents a different tactic (initial-access, execution, discovery, collection, exfiltration, etc.) with events plotted chronologically. Benign background traffic appears in the bottom track. Colors match the MITRE ATT&CK framework palette for consistency. The legend shows original event counts before sampling. This visualization reveals temporal attack patterns, such as discovery preceding collection, and collection preceding exfiltration.
+
 **Features**:
 - Individual tracks for each MITRE ATT&CK tactic
 - Benign background traffic visualization
@@ -341,7 +363,16 @@ if protocol == 'tcp' and filter_dc_tcp and attacker_ip NOT in (source_ips or des
 - Title indicates sampling: "(Sampled: 200,000 events shown from 2,641,388 total)"
 - Legend shows ORIGINAL counts (not sampled counts)
 
+![Figure 9.5: Smart Sampling Strategy](figures/figure_9_5_smart_sampling.png)
+**Figure 9.5**: Flowchart illustrating the smart sampling algorithm for large NetFlow datasets (>200K events). The process groups events by (Label, Tactic), preserves temporal boundaries (first and last events in each group to maintain timeline span), allocates 90% of sample budget to malicious events and 10% to benign, randomly samples middle events proportionally, and combines all samples into a 200K-event visualization dataset. This strategy prevents memory issues while preserving attack patterns and temporal characteristics.
+
 ### Dual-Domain Timeline (Sysmon + NetFlow)
+
+The dual-domain timeline combines Sysmon host events and NetFlow network events in a synchronized visualization, enabling comprehensive attack behavior analysis across both domains.
+
+![Figure 9.3: Dual-Domain Attack Timeline](figures/figure_9_3_dual_domain_timeline.png)
+**Figure 9.3**: Dual-domain timeline with Sysmon events (top panel, grouped by computer hostname) and NetFlow events (bottom panel, separated by tactic) sharing a unified time axis. Vertical alignment reveals temporal correlations between host and network activities. For example, a Sysmon discovery event (top) temporally aligns with NetFlow discovery traffic (bottom), validating the correlation logic. This visualization is essential for understanding how host-level attack operations manifest as network communications.
+
 **Features**:
 - **Top Panel**: Sysmon malicious events grouped by computer
 - **Bottom Panel**: NetFlow events by tactic

@@ -144,7 +144,26 @@ dataset/
      - execution: 16 events
 ```
 
+### Label Distribution Visualization
+
+The labeled dataset exhibits extreme class imbalance characteristic of real-world cybersecurity data, with malicious events comprising less than 0.5% of total events.
+
+![Figure 8.2: Label Distribution Pyramid](figures/figure_8_2_label_pyramid.png)
+**Figure 8.2**: Inverted pyramid showing the dramatic class imbalance in the labeled Sysmon dataset. Benign events (145,617, shown as wide blue base) dwarf malicious events (215, shown as narrow red peak at 0.15% of total). This extreme imbalance necessitates specialized machine learning techniques such as SMOTE, class weighting, or ensemble methods to prevent model bias toward the majority class.
+
+### Tactic-Level Distribution
+
+Among malicious events, the distribution of MITRE ATT&CK tactics reflects the nature of the attack campaign, with discovery operations typically dominating.
+
+![Figure 8.3: Tactic Breakdown for Malicious Events](figures/figure_8_3_tactic_breakdown.png)
+**Figure 8.3**: Horizontal bar chart showing the breakdown of 215 malicious events by MITRE ATT&CK tactic. Discovery leads with 86 events (40%), followed by defensive-evasion (24 events, 11%), persistence (21 events, 10%), exfiltration (20 events, 9%), collection (18 events, 8%), and execution (16 events, 7%). This distribution characterizes the adversary's operational priorities and can guide defense strategies.
+
 ## Labeling Logic
+
+The labeling process merges raw Sysmon events with traced attack events, producing a complete dataset where every event receives a binary label (benign/malicious) with optional MITRE ATT&CK annotations.
+
+![Figure 8.1: Label Merging Logic](figures/figure_8_1_label_merging.png)
+**Figure 8.1**: Flowchart illustrating the label merging algorithm. The process starts with raw Sysmon events (145,832 total) and traced events from Step 7 (247 malicious). Using composite identifiers (timestamp, EventID, Computer), the algorithm matches traced events to raw events, labels matches as 'malicious' with inherited tactic/technique, and labels all non-matches as 'benign'. The result is a complete labeled dataset with 100% coverage.
 
 ### Malicious Event Identification
 ```python
@@ -320,6 +339,12 @@ Seed_RowNumber,Correct_SeedRowNumber,Tactic,EventID,CommandLine
 - Others: 10-15% (privilege-escalation, credential-access, etc.)
 
 ### Imbalanced Dataset Handling
+
+The extreme class imbalance requires specialized machine learning approaches to prevent models from simply predicting all events as benign.
+
+![Figure 8.4: Imbalanced Dataset ML Strategies](figures/figure_8_4_imbalanced_strategies.png)
+**Figure 8.4**: Comparison of machine learning strategies for handling imbalanced datasets. The chart shows performance metrics (precision, recall, F1-score) for different approaches: naive training (poor recall), SMOTE oversampling (improved balance), class weighting (better recall), and ensemble methods (best overall). The visualization demonstrates why specialized techniques are essential for effective malicious event detection in highly imbalanced cybersecurity datasets.
+
 **Class Imbalance**:
 - Benign: ~99.5-99.9% of events
 - Malicious: ~0.1-0.5% of events

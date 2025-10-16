@@ -134,7 +134,26 @@ dataset/apt-X/apt-X-run-XX/all_target_events_run-XX.csv
    Extraction rate: 32.8% of total events
 ```
 
+### Extraction Funnel Visualization
+
+The extraction process progressively narrows from all Sysmon events to analyst-marked seed events, creating a focused dataset of significant attack indicators.
+
+![Figure 6.1: Target Event Filtering Logic](figures/figure_6_1_filtering_funnel.png)
+**Figure 6.1**: Funnel diagram showing the four-stage filtering process. Starting with 145,832 raw Sysmon events (all EventIDs), the script filters to 47,899 target events (EventID 1, 11, 23 only - 32.8% retained). Analysts then review these events and mark 215 as seed events (0.14% of original dataset). The narrow focus on seed events enables efficient human-in-the-loop labeling while capturing critical attack operations.
+
+### EventID Distribution in Extracted Events
+
+The distribution of extracted events reflects the nature of attack activities, with process execution (EventID 1) dominating, followed by file operations.
+
+![Figure 6.3: EventID Distribution in Target Events](figures/figure_6_3_target_eventid_pie.png)
+**Figure 6.3**: Pie chart showing the breakdown of extracted target events by EventID type. Process Creation (EventID 1) comprises 59.4% (28,456 events), File Creation (EventID 11) comprises 31.9% (15,287 events), and File Deletion (EventID 23) comprises 8.7% (4,156 events). This distribution guides analysts toward the most informationally-rich event types for seed selection.
+
 ## Manual Selection Workflow
+
+The manual selection workflow involves opening the extracted events CSV, reviewing attack indicators, marking seed events with MITRE ATT&CK labels, and saving the annotated dataset for lifecycle tracing.
+
+![Figure 6.2: Manual Selection Workflow](figures/figure_6_2_manual_workflow.png)
+**Figure 6.2**: Flowchart illustrating the analyst workflow for manual seed event selection. Starting with the extracted target events CSV, analysts review command lines and file operations, identify significant attack behaviors, mark seed events with 'x', annotate with MITRE ATT&CK tactic/technique labels, save the file, and optionally re-run the extractor to preserve selections. This human-in-the-loop process ensures high-quality ground truth labels for attack lifecycle tracing.
 
 ### Step 1: Open CSV File
 Open `all_target_events_run-XX.csv` in Excel, LibreOffice Calc, or any CSV editor.

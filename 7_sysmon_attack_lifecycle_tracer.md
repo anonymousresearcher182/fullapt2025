@@ -18,6 +18,11 @@
 
 ### Correlation Strategies
 
+The script employs different correlation strategies based on EventID type, using ProcessGuid relationships for process events and direct timeline placement for file operations.
+
+![Figure 7.2: Multi-EventID Handling Strategy](figures/figure_7_2_multi_eventid_strategy.png)
+**Figure 7.2**: Decision tree showing correlation strategy selection based on EventID type. EventID 1 (Process Creation) uses recursive ProcessGuid correlation to trace parent-child process relationships. EventID 11 (File Creation) and EventID 23 (File Deletion) use direct timeline placement without correlation, as file operations don't spawn processes. This dual approach ensures comprehensive attack lifecycle coverage across different event types.
+
 **EventID 1 (Process Creation) - ProcessGuid Correlation**:
 - Traces all child processes spawned from seed process
 - Follows process tree relationships using ProcessGuid/ParentProcessGuid
@@ -141,6 +146,13 @@ x,initial-access,T1659,487566,487566,11,1748128761858,...
 
 ## Correlation Logic
 
+### ProcessGuid Correlation Tree
+
+ProcessGuid correlation enables recursive tracing of process family trees, starting from seed events and following parent-child relationships to discover complete attack execution chains.
+
+![Figure 7.1: ProcessGuid Correlation Tree](figures/figure_7_1_processguid_tree.png)
+**Figure 7.1**: Hierarchical tree diagram showing recursive ProcessGuid correlation from a seed event (red root node). The algorithm traces child processes (green nodes) by matching ParentProcessGuid to the seed's ProcessGuid, then recursively traces grandchildren (blue nodes) and further descendants. Each level inherits the tactic/technique labels from the original seed event, enabling comprehensive attack lifecycle expansion. The tree depth can extend 10+ levels for complex attack campaigns.
+
 ### EventID 1 Correlation (Process Creation)
 
 **Seed Event Identification**:
@@ -236,6 +248,20 @@ Marked Seeds + Raw Sysmon → Lifecycle Tracing → Traced Events CSV → Datase
 - **Medium Campaigns**: 10-30 seed events → ~200-800 traced events
 - **Large Campaigns**: 30+ seed events → ~800-2000+ traced events
 - **ProcessGuid Performance**: O(n*m) where n=traced events, m=potential children
+
+### Attack Lifecycle Expansion Visualization
+
+The lifecycle tracing process progressively expands from manually-marked seed events to comprehensive attack datasets through recursive ProcessGuid correlation, dramatically increasing the labeled event count.
+
+![Figure 7.3: Attack Lifecycle Expansion Waterfall](figures/figure_7_3_expansion_waterfall.png)
+**Figure 7.3**: Waterfall chart showing the expansion from seed events to complete attack lifecycle. Starting with 15 manually-marked seed events (red bar), the algorithm traces 183 child processes (blue bar) and 49 additional related events (green bar), resulting in 247 total traced events (16.5x expansion). The visualization demonstrates how human-in-the-loop seed selection combined with automated tracing efficiently labels comprehensive attack campaigns.
+
+### Timeline Visualization Example
+
+Individual seed event timelines provide focused views of specific attack operations, showing temporal relationships between seed events and their traced descendants.
+
+![Figure 7.4: Timeline Visualization Example](figures/figure_7_4_timeline_example.png)
+**Figure 7.4**: Example timeline plot for a single seed event showing temporal attack progression. The seed event (red star at initial-access phase) triggers multiple child processes (colored circles) across different MITRE ATT&CK tactics over a 2-minute window. The x-axis shows time progression, y-axis shows the computer hostname, and colors indicate tactics (execution, discovery, collection, exfiltration). This visualization enables analysts to understand attack sequencing and identify anomalous temporal patterns.
 
 ## Quality Assurance
 
