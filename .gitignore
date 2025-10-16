@@ -77,11 +77,11 @@ docs/
 # ============================================
 # BACKUP AND DEPRECATED FILES
 # ============================================
-scripts/exploratory/backup-scripts/
-scripts/exploratory/deprecated/
-scripts/**/backup/
-scripts/**/deprecated/
-scripts/**/old/
+# scripts/exploratory/backup-scripts/
+# scripts/exploratory/deprecated/
+# scripts/**/backup/
+# scripts/**/deprecated/
+# scripts/**/old/
 scripts/analysis/
 scripts/batch/
 scripts/config/
