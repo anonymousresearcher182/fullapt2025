@@ -72,21 +72,19 @@ docs/
 *.tmp
 *.temp
 .cache/
-# Suggested additions to .gitignore for scripts/ directory
+# ============================================
+# SCRIPTS DIRECTORY FILTERING
+# ============================================
+# Ignore everything in scripts/ EXCEPT scripts/pipeline/
+scripts/*
+!scripts/pipeline/
 
-# ============================================
-# BACKUP AND DEPRECATED FILES
-# ============================================
-# scripts/exploratory/backup-scripts/
-# scripts/exploratory/deprecated/
-# scripts/**/backup/
-# scripts/**/deprecated/
-# scripts/**/old/
-scripts/analysis/
-scripts/batch/
-scripts/config/
-scripts/dev/
-scripts/exploratory/
+# Keep these original exclusions as backup documentation:
+# scripts/analysis/
+# scripts/batch/
+# scripts/config/
+# scripts/dev/
+# scripts/exploratory/
 
 # Backup file patterns
 *.bak
