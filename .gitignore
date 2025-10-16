@@ -79,6 +79,7 @@ docs/
 scripts/*
 !scripts/pipeline/
 !attack-emulation/
+
 # Keep these original exclusions as backup documentation:
 # scripts/analysis/
 # scripts/batch/
