@@ -82,6 +82,11 @@ scripts/exploratory/deprecated/
 scripts/**/backup/
 scripts/**/deprecated/
 scripts/**/old/
+scripts/analysis/
+scripts/batch/
+scripts/config/
+scripts/dev/
+scripts/exploratory/
 
 # Backup file patterns
 *.bak
@@ -145,8 +150,3 @@ scripts/exploratory/7_create_labeled_sysmon_dataset\ (copy).py
 scripts/exploratory/apt-yaml/Wizard\ Spider-chatgpt-correction.yaml
 
 # Folders that are not ready or are currently meaningless
-scripts/analysis
-scripts/batch
-scripts/config
-scripts/dev
-scripts/exploratory
