@@ -1,0 +1,151 @@
+# LARGE DATASETS (exclude all raw data)
+datasets/
+# Exclude data-raw contents except Jupyter notebooks
+data-raw/**/*.jsonl
+data-raw/**/*.csv
+data-raw/**/*.json
+data-raw/**/*.txt
+data-raw/**/*.py
+# But allow Jupyter notebooks in data-raw
+!data-raw/**/*.ipynb
+
+# Generate artifacts (exclude all outputs)
+data/
+models/
+artifacts/
+
+# Python Virtual environment
+dataset-venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz
+*.pywz
+*.pyzw
+env/
+venv/
+.venv/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Large files and sensitive files
+.claude/
+*.csv
+*.parquet
+*.npz
+*.h5
+*.hdf5
+*.pkl
+*.joblib
+*.tar.gz
+*.zip
+*.7z
+
+# API keys and secrets
+*api*key*.txt
+openai-api-key.txt
+*.key
+*.keys
+*.env
+
+# System files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
+logs/
+
+# Others folder (might contain large files)
+others/
+
+# PDFs (academic papers can be large)
+pdfs/
+docs/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+# ============================================
+# SCRIPTS DIRECTORY FILTERING
+# ============================================
+# Ignore everything in scripts/ EXCEPT scripts/pipeline/
+scripts/*
+!scripts/pipeline/
+!attack-emulation/
+
+# Keep these original exclusions as backup documentation:
+# scripts/analysis/
+# scripts/batch/
+# scripts/config/
+# scripts/dev/
+# scripts/exploratory/
+
+# Backup file patterns
+*.bak
+*.bak2
+*-BACK.py
+*-BACK2.py
+*-old.py
+*-OLD.py
+*\ (copy).py
+*\ (copy).md
+
+# ============================================
+# SESSION AND TEMPORARY DOCUMENTATION
+# ============================================
+scripts/exploratory/SESSION_RECOVERY_GUIDE.md
+CLAUDE_BACKUP.md
+CLAUDE_HISTORY.md
+
+# ============================================
+# ANALYSIS RESULTS (large folders)
+# ============================================
+analysis/correlation-analysis/
+analysis/correlation-analysis-v2/
+analysis/correlation-analysis-v3/
+analysis/modeling/
+analysis/netflow-analysis/
+analysis/network-community-id-analysis/
+analysis/process-identity-consistency/
+
+# ============================================
+# DATASETS AND INFRASTRUCTURE
+# ============================================
+dataset/
+infrastructure/
+augment-kv-store/
+backups/
+backup-deprecated/
+other-datasets/
+
+# ============================================
+# SPECIFIC FILES TO EXCLUDE
+# ============================================
+# Old integrated netflow labeler (superseded by v2)
+scripts/exploratory/INTEGRATED_netflow_labeler-BACK.py
+scripts/exploratory/INTEGRATED_netflow_labeler-BACK2.py
+scripts/exploratory/INTEGRATED_netflow_labeler-v1.py
+scripts/exploratory/INTEGRATED_netflow_labeler-v2.py
+scripts/exploratory/INTEGRATED_netflow_labeler\ (before\ dividing\ by\ protocol).py
+scripts/exploratory/INTEGRATED_netflow_labeler\ (before\ sub-folders).py
+scripts/exploratory/INTEGRATED_netflow_labeler\ (before\ time-window\ automation).py
+scripts/exploratory/INTEGRATED_netflow_labeler\ (copy).py
+
+# Old seed/lifecycle scripts
+scripts/exploratory/5_sysmon_seed_event_extractor.py.bak
+scripts/exploratory/6_sysmon_attack_lifecycle_tracer.py.bak
+scripts/exploratory/6_sysmon_attack_lifecycle_tracer.py.bak2
+scripts/exploratory/7_create_labeled_sysmon_dataset.py.bak
+scripts/exploratory/7_create_labeled_sysmon_dataset\ (copy).py
+
+# Corrected YAML files (keep only final versions)
+scripts/exploratory/apt-yaml/Wizard\ Spider-chatgpt-correction.yaml
+
+# Folders that are not ready or are currently meaningless
