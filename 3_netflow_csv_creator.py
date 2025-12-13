@@ -41,6 +41,7 @@ KEY FEATURES:
 Dependencies: pandas, numpy, pyyaml
 """
 
+
 import argparse
 import json
 import logging
@@ -103,6 +104,8 @@ class NetworkTrafficCSVCreator:
         self.fields = [
             # === TEMPORAL FIELDS ===
             ('@timestamp', 'timestamp'),                    # Always present (100%)
+            ('event.start', 'event_start'),                    # Always present (100%)
+            ('event.end', 'event_end'),                    # Always present (100%)
             
             # === DESTINATION FIELDS ===
             ('destination.bytes', 'destination_bytes'),     # Always present (100%)
@@ -362,15 +365,44 @@ class NetworkTrafficCSVCreator:
             # Generate output filename: log-netflow-JSONL-to-csv-run-X.json
             run_number = self._extract_run_number(jsonl_path)
             json_log_file = Path(jsonl_path).parent / f"log-netflow-JSONL-to-csv-run-{run_number}.json"
+            print(f"🔍 DEBUG: Generated log file path: {json_log_file}")
+            print(f"🔍 DEBUG: Log file parent directory: {json_log_file.parent}")
+            print(f"🔍 DEBUG: Parent exists: {json_log_file.parent.exists()}")
+            print(f"🔍 DEBUG: Parent writable: {os.access(json_log_file.parent, os.W_OK)}")
+            
+            # Check if log file already exists and remove it to ensure replacement
+            if json_log_file.exists():
+                try:
+                    json_log_file.unlink()  # Delete existing log file
+                    self.logger.info(f"🗑️ Removed existing log file: {json_log_file.name}")
+                except Exception as e:
+                    self.logger.warning(f"⚠️ Could not remove existing log file: {e}")
             
             self.logger.info(f"💾 Writing network traffic log file: {json_log_file}")
             
-            # Save JSON log
-            with open(json_log_file, 'w') as f:
-                json.dump(log_data, f, indent=2, default=str)
-            
-            self.logger.info(f"✅ Network traffic processing log saved: {json_log_file.name}")
-            print(f"📊 Network traffic log created: {json_log_file}")  # Extra visibility
+            # Save JSON log with explicit write mode and error handling
+            try:
+                with open(json_log_file, 'w', encoding='utf-8') as f:
+                    json.dump(log_data, f, indent=2, default=str, ensure_ascii=False)
+                
+                # Verify file was written successfully
+                if json_log_file.exists() and json_log_file.stat().st_size > 0:
+                    self.logger.info(f"✅ Network traffic processing log saved: {json_log_file.name} ({json_log_file.stat().st_size} bytes)")
+                    print(f"📊 Network traffic log created: {json_log_file}")  # Extra visibility
+                else:
+                    raise Exception("Log file was not created or is empty")
+                    
+            except Exception as write_error:
+                self.logger.error(f"❌ Failed to write log file: {write_error}")
+                # Try alternative location if main write fails
+                fallback_log = Path(jsonl_path).parent / f"log-netflow-fallback-{run_number}-{datetime.now().strftime('%H%M%S')}.json"
+                try:
+                    with open(fallback_log, 'w', encoding='utf-8') as f:
+                        json.dump(log_data, f, indent=2, default=str, ensure_ascii=False)
+                    self.logger.info(f"📋 Fallback log saved: {fallback_log.name}")
+                except Exception as fallback_error:
+                    self.logger.error(f"❌ Fallback log write also failed: {fallback_error}")
+                    raise write_error
             
         except Exception as e:
             self.logger.error(f"❌ Error saving processing log: {str(e)}")
@@ -379,20 +411,30 @@ class NetworkTrafficCSVCreator:
         """Extract run number from jsonl filename or directory path"""
         import re
         
+        print(f"🔍 DEBUG: Extracting run number from: {jsonl_path}")
+        
         # Try to extract from filename first
         filename = Path(jsonl_path).name
+        print(f"🔍 DEBUG: Filename: {filename}")
         run_match = re.search(r'run-(\d+)', filename)
         if run_match:
-            return run_match.group(1)
+            run_number = run_match.group(1)
+            print(f"🔍 DEBUG: Found run number in filename: {run_number}")
+            return run_number
         
         # Try to extract from directory path
         path_str = str(jsonl_path)
+        print(f"🔍 DEBUG: Full path: {path_str}")
         run_match = re.search(r'run-(\d+)', path_str)
         if run_match:
-            return run_match.group(1)
+            run_number = run_match.group(1)
+            print(f"🔍 DEBUG: Found run number in path: {run_number}")
+            return run_number
         
         # Fallback to timestamp if no run number found
-        return datetime.now().strftime('%Y%m%d_%H%M%S')
+        fallback = datetime.now().strftime('%Y%m%d_%H%M%S')
+        print(f"🔍 DEBUG: No run number found, using fallback: {fallback}")
+        return fallback
     
     def read_jsonl_in_chunks(self, jsonl_path: str) -> List[List[str]]:
         """Read JSONL file and split into chunks for multi-threading."""
@@ -574,9 +616,20 @@ class NetworkTrafficCSVCreator:
         
         # Save comprehensive processing log
         print(f"🔄 Generating network traffic processing statistics...")
-        self._save_processing_log(input_file, total_lines, self.shared_stats['total_processed'], 
-                                 self.shared_stats['total_errors'], df_result)
-        print(f"✅ Network traffic processing statistics complete!")
+        print(f"🔍 DEBUG: About to create log for input file: {input_file}")
+        try:
+            self._save_processing_log(input_file, total_lines, self.shared_stats['total_processed'], 
+                                     self.shared_stats['total_errors'], df_result)
+            print(f"✅ Network traffic processing statistics complete!")
+        except Exception as log_error:
+            print(f"❌ CRITICAL: Log creation failed with error: {log_error}")
+            print(f"🔍 DEBUG: Input file path: {input_file}")
+            print(f"🔍 DEBUG: Input file exists: {os.path.exists(input_file)}")
+            print(f"🔍 DEBUG: Input file parent: {Path(input_file).parent}")
+            print(f"🔍 DEBUG: Parent directory exists: {Path(input_file).parent.exists()}")
+            print(f"🔍 DEBUG: Parent directory writable: {os.access(Path(input_file).parent, os.W_OK)}")
+            # Continue execution even if logging fails
+            self.logger.error(f"Log creation failed: {log_error}")
         
         return df_result
     
@@ -585,34 +638,66 @@ class NetworkTrafficCSVCreator:
         network_config = self.config.get('network_traffic_processor', {}) or self.config.get('script_03_network_csv_creator', {})
         enable_temporal_sorting = network_config.get('enable_temporal_sorting', True)
         
-        if 'timestamp' in df.columns:
-            self.logger.info("🕒 Converting network timestamps to ML-compatible epoch format")
+        # Define all timestamp fields to process
+        timestamp_fields = ['timestamp', 'event_start', 'event_end']
+        processed_fields = []
+        
+        for field in timestamp_fields:
+            if field in df.columns:
+                self.logger.info(f"🕒 Converting {field} to ML-compatible epoch format")
+                try:
+                    # Convert timestamp field to datetime for processing
+                    df[field] = pd.to_datetime(df[field], errors='coerce')
+                    
+                    # Count and log invalid timestamps
+                    invalid_timestamps = df[field].isnull().sum()
+                    if invalid_timestamps > 0:
+                        self.logger.warning(f"⚠️ Found {invalid_timestamps} invalid {field} timestamps")
+                    
+                    # CONVERT TO EPOCH TIMESTAMP FOR ML COMPATIBILITY
+                    # Convert to epoch with millisecond precision preserved as INTEGER
+                    df[field] = (df[field].astype('int64') // 10**6).astype('int64')  # nanoseconds to milliseconds (integer)
+                    
+                    processed_fields.append(field)
+                    
+                    # Log conversion statistics
+                    valid_epochs = df[field].dropna()
+                    if len(valid_epochs) > 0:
+                        self.logger.info(f"✅ Converted {len(valid_epochs):,} {field} values to epoch format")
+                        
+                except Exception as e:
+                    self.logger.error(f"❌ Error during {field} processing: {e}")
+                    self.logger.warning(f"⚠️ Continuing without {field} standardization")
+        
+        if not processed_fields:
+            self.logger.warning("⚠️ No timestamp fields found - timestamps will not be processed")
+            return df
+        
+        # Apply temporal sorting if enabled (use main timestamp field if available)
+        if 'timestamp' in processed_fields and enable_temporal_sorting:
+            self.logger.info("🔄 Sorting network events chronologically by main timestamp")
+            df = df.sort_values('timestamp', na_position='last').reset_index(drop=True)
+        
+        # Log comprehensive timestamp analysis using main timestamp field
+        if 'timestamp' in processed_fields:
             try:
-                # Convert timestamp to datetime for processing
-                df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
-                
-                # Count and log invalid timestamps
-                invalid_timestamps = df['timestamp'].isnull().sum()
-                if invalid_timestamps > 0:
-                    self.logger.warning(f"⚠️ Found {invalid_timestamps} invalid timestamps")
-                
-                # Apply temporal sorting if enabled
-                if enable_temporal_sorting:
-                    self.logger.info("🔄 Sorting network events chronologically")
-                    df = df.sort_values('timestamp', na_position='last').reset_index(drop=True)
-                
-                # Log timestamp range for verification
                 valid_timestamps = df['timestamp'].dropna()
                 if len(valid_timestamps) > 0:
-                    min_time = valid_timestamps.min()
-                    max_time = valid_timestamps.max()
+                    # Convert back to human-readable for verification and logging
+                    min_time = pd.to_datetime(valid_timestamps.min(), unit='ms')
+                    max_time = pd.to_datetime(valid_timestamps.max(), unit='ms')
                     duration = max_time - min_time
+                    
                     self.logger.info(f"📅 Network Timeline: {min_time} → {max_time}")
                     self.logger.info(f"⏱️ Network Duration: {duration.total_seconds()/3600:.2f} hours")
+                    self.logger.info(f"📊 Main timestamp epoch range: {valid_timestamps.min()} to {valid_timestamps.max()}")
                     
-                    # Log flow timeline statistics before conversion
+                    # Log flow timeline statistics
                     if 'network_traffic_flow_id' in df.columns:
-                        flow_timeline_stats = df.groupby('network_traffic_flow_id')['timestamp'].agg(['min', 'max', 'count'])
+                        # Convert epoch back to datetime for duration calculations
+                        df_temp = df.copy()
+                        df_temp['timestamp_dt'] = pd.to_datetime(df_temp['timestamp'], unit='ms')
+                        flow_timeline_stats = df_temp.groupby('network_traffic_flow_id')['timestamp_dt'].agg(['min', 'max', 'count'])
                         avg_flow_duration = (flow_timeline_stats['max'] - flow_timeline_stats['min']).mean()
                         avg_events_per_flow = flow_timeline_stats['count'].mean()
                         
@@ -626,32 +711,14 @@ class NetworkTrafficCSVCreator:
                         
                         self.logger.info(f"🔄 Average flow duration: {avg_duration_seconds:.1f} seconds")
                         self.logger.info(f"📊 Average events per flow: {avg_events_per_flow:.1f}")
-                
-                # CONVERT TO EPOCH TIMESTAMP FOR ML COMPATIBILITY
-                self.logger.info("🔄 Converting to epoch format (Unix timestamp)")
-                
-                # Convert to epoch with millisecond precision preserved as INTEGER
-                df['timestamp'] = (df['timestamp'].astype('int64') // 10**6).astype('int64')  # nanoseconds to milliseconds (integer)
-                
-                self.logger.info("⚡ Network timestamp precision: Milliseconds preserved as integer for exact correlation matching")
-                
-                # Log conversion statistics
-                valid_epochs = df['timestamp'].dropna()
-                if len(valid_epochs) > 0:
-                    self.logger.info(f"✅ Converted {len(valid_epochs):,} timestamps to epoch format")
-                    self.logger.info(f"📊 Epoch range: {valid_epochs.min()} to {valid_epochs.max()}")
-                    
-                    # Convert back to human-readable for verification
-                    earliest_human = pd.to_datetime(valid_epochs.min(), unit='ms')
-                    latest_human = pd.to_datetime(valid_epochs.max(), unit='ms')
-                    self.logger.info(f"🕐 Verification: {earliest_human} to {latest_human}")
-                
+                        
             except Exception as e:
-                self.logger.error(f"❌ Error during timestamp processing: {e}")
-                self.logger.warning("⚠️ Continuing without timestamp standardization")
+                self.logger.error(f"❌ Error during timestamp analysis: {e}")
         
-        else:
-            self.logger.warning("⚠️ No timestamp column found - timestamps will not be processed")
+        # Log summary of processed timestamp fields
+        if processed_fields:
+            self.logger.info(f"⚡ Timestamp fields processed: {', '.join(processed_fields)}")
+            self.logger.info("⚡ All timestamp precision: Milliseconds preserved as integer for exact correlation matching")
         
         return df
     
@@ -939,18 +1006,27 @@ def auto_detect_files(apt_dir: str, base_dir: str = '.') -> Tuple[Optional[str],
     if not output_file:
         input_basename = os.path.basename(input_file)
         if "network" in input_basename:
-            # Extract date pattern from input file
             import re
-            date_match = re.search(r'(\d{4}-\d{2}-\d{2})', input_basename)
-            if date_match:
-                date_str = date_match.group(1)
-                output_file = os.path.join(full_apt_path, f"network_traffic_flow-{date_str}-000001.csv")
+            # PRIORITY 1: Extract run number from input file (e.g., run-04 from ds-logs-network_traffic-flow-default-run-04.jsonl)
+            run_match = re.search(r'run-(\d+)', input_basename)
+            if run_match:
+                run_number = run_match.group(1)
+                output_file = os.path.join(full_apt_path, f"netflow-run-{run_number}.csv")
+                print(f"📝 Using run-number based naming: netflow-run-{run_number}.csv")
             else:
-                # Fallback naming
-                output_file = os.path.join(full_apt_path, "network_traffic_flow-output.csv")
+                # PRIORITY 2: Try date pattern as backup
+                date_match = re.search(r'(\d{4}-\d{2}-\d{2})', input_basename)
+                if date_match:
+                    date_str = date_match.group(1)
+                    output_file = os.path.join(full_apt_path, f"network_traffic_flow-{date_str}-000001.csv")
+                    print(f"📝 Using date-based naming: network_traffic_flow-{date_str}-000001.csv")
+                else:
+                    # PRIORITY 3: Final fallback naming
+                    output_file = os.path.join(full_apt_path, "network_traffic_flow-output.csv")
+                    print(f"📝 Using fallback naming: network_traffic_flow-output.csv")
         else:
             output_file = input_file.replace('.jsonl', '.csv')
-        print(f"📝 Using auto-generated output: {os.path.basename(output_file)}")
+            print(f"📝 Using filename replacement: {os.path.basename(output_file)}")
     
     print(f"📥 Detected input: {os.path.relpath(input_file)}")
     print(f"📤 Target output: {os.path.relpath(output_file)}")
@@ -1034,12 +1110,27 @@ Examples:
             final_input = args.input if args.input else input_file
             final_output = args.output if args.output else output_file
             
+            # CRITICAL FIX: Ensure paths are absolute to prevent working directory issues
+            final_input = os.path.abspath(final_input)
+            final_output = os.path.abspath(final_output)
+            print(f"🔧 Resolved absolute input: {final_input}")
+            print(f"🔧 Resolved absolute output: {final_output}")
+            
         else:
             # Traditional mode - only use config if it exists and --input/--output are not provided
             config_to_use = args.config if os.path.exists(args.config) and not (args.input and args.output) else None
             converter = NetworkTrafficCSVCreator(config_to_use)
             final_input = args.input
             final_output = args.output
+            
+            # CRITICAL FIX: Ensure paths are absolute in traditional mode too
+            if final_input:
+                final_input = os.path.abspath(final_input)
+                print(f"🔧 Resolved absolute input: {final_input}")
+            if final_output:
+                final_output = os.path.abspath(final_output)
+                print(f"🔧 Resolved absolute output: {final_output}")
+            
             if config_to_use:
                 print(f"🔧 Traditional mode using config: {args.config}")
             else:

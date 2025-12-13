@@ -39,7 +39,7 @@ The transformation process converts nested JSON structures with embedded XML int
 python3 2_sysmon_csv_creator.py --input sysmon.jsonl --output sysmon.csv
 
 # Process specific APT run directory (auto-detection)
-python3 2_sysmon_csv_creator.py --apt-dir apt-1/apt-1-run-04
+python3 2_sysmon_csv_creator.py --apt-dir dataset/run-01-apt-1
 
 # Use configuration file
 python3 2_sysmon_csv_creator.py --config config.yaml
@@ -54,7 +54,7 @@ python3 2_sysmon_csv_creator.py
 ### Execution Location
 ```bash
 # From pipeline directory
-cd /home/researcher/Downloads/research/dataset/scripts/pipeline/
+cd /home/researcher/Downloads/research/scripts/pipeline/
 python3 2_sysmon_csv_creator.py [options]
 ```
 
@@ -162,13 +162,27 @@ JSONL (Compressed) → XML Parsing → Field Extraction → CSV (Normalized)
 - **Schema Issues**: Verify event XML structure
 
 ## APT Dataset Integration
-Designed for processing APT campaign data:
-- **APT-1**: Runs 04-20, 51 (OilRig-based attacks)
-- **APT-2**: Runs 21-30 (OilRig variants)
-- **APT-3**: Runs 31-38 (OilRig variants)
-- **APT-4**: Runs 39-44 (APT-29 based)
-- **APT-5**: Runs 45-47 (APT-29 variants)
-- **APT-6**: Runs 48-50 (Wizard Spider based)
+Designed for processing APT campaign data with flat directory structure (`run-XX-apt-Y`):
+- **APT-1**: Runs 01-18 (18 runs) - OilRig-based attacks
+- **APT-2**: Runs 19-27 (9 runs) - OilRig variants
+- **APT-3**: Runs 28-35 (8 runs) - OilRig variants
+- **APT-4**: Runs 36-41 (6 runs) - APT-29 based
+- **APT-5**: Runs 42-44 (3 runs) - APT-29 variants
+- **APT-6**: Runs 45-47 (3 runs) - Wizard Spider based
+
+**Total**: 47 runs across 6 APT families
+
+### Directory Structure
+```
+~/Downloads/research/dataset/
+├── run-01-apt-1/
+│   ├── ds-logs-windows-sysmon_operational-default-run-01.jsonl
+│   ├── sysmon-run-01.csv                    # Output
+│   └── log-sysmon-JSONL-to-csv-run-01.json  # Processing metadata
+├── run-02-apt-1/
+├── ...
+└── run-47-apt-6/
+```
 
 ---
 *This script transforms raw Sysmon telemetry into structured datasets ready for temporal correlation analysis and machine learning applications in the dual-domain cybersecurity research pipeline.*

@@ -40,7 +40,7 @@ The script automatically discovers Elasticsearch indices by matching keywords ag
 ### Basic Execution
 ```bash
 # From pipeline directory
-cd /home/researcher/Downloads/research/dataset/scripts/pipeline/
+cd /home/researcher/Downloads/research/scripts/pipeline/
 python3 1_elastic_index_downloader.py
 ```
 
@@ -54,9 +54,18 @@ python3 1_elastic_index_downloader.py
 **Output Directory**: Current directory (`./`)
 
 ### Output Files
-Creates JSONL files with patterns:
-- `ds-logs-windows-sysmon_operational-default-run-XX.jsonl.gz`
-- `ds-logs-network_traffic-flow-default-run-XX.jsonl.gz`
+Creates compressed JSONL files saved to `~/Downloads/research/dataset/dataset-backup/`:
+- `ds-logs-windows-sysmon_operational-default-run-XX.jsonl.gz` (runs 01-47)
+- `ds-logs-network_traffic-flow-default-run-XX.jsonl.gz` (runs 01-47)
+
+### APT Run Distribution
+Downloads data for 47 APT attack emulation runs across 6 APT families:
+- **APT-1**: Runs 01-18 (18 runs)
+- **APT-2**: Runs 19-27 (9 runs)
+- **APT-3**: Runs 28-35 (8 runs)
+- **APT-4**: Runs 36-41 (6 runs)
+- **APT-5**: Runs 42-44 (3 runs)
+- **APT-6**: Runs 45-47 (3 runs)
 
 ## Dependencies
 ```bash

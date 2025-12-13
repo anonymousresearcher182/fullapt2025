@@ -33,7 +33,7 @@
 python3 3_network_traffic_csv_creator.py --input network.jsonl --output network.csv
 
 # Process specific APT run directory (auto-detection)
-python3 3_network_traffic_csv_creator.py --apt-dir apt-1/apt-1-run-04
+python3 3_network_traffic_csv_creator.py --apt-dir dataset/run-01-apt-1
 
 # Use configuration file
 python3 3_network_traffic_csv_creator.py --config config_restructured.yaml
@@ -48,7 +48,7 @@ python3 3_network_traffic_csv_creator.py
 ### Execution Location
 ```bash
 # From pipeline directory
-cd /home/researcher/Downloads/research/dataset/scripts/pipeline/
+cd /home/researcher/Downloads/research/scripts/pipeline/
 python3 3_network_traffic_csv_creator.py [options]
 ```
 
@@ -189,6 +189,29 @@ Optimized for APT dataset processing:
 - **Performance**: Adjust max_workers and chunk_size for optimal throughput
 - **Flow Issues**: Verify network_traffic_flow_id consistency
 - **JSON Errors**: Check JSONL file integrity and format
+
+## APT Dataset Integration
+Designed for processing APT campaign network traffic with flat directory structure (`run-XX-apt-Y`):
+- **APT-1**: Runs 01-18 (18 runs) - OilRig-based attacks
+- **APT-2**: Runs 19-27 (9 runs) - OilRig variants
+- **APT-3**: Runs 28-35 (8 runs) - OilRig variants
+- **APT-4**: Runs 36-41 (6 runs) - APT-29 based
+- **APT-5**: Runs 42-44 (3 runs) - APT-29 variants
+- **APT-6**: Runs 45-47 (3 runs) - Wizard Spider based
+
+**Total**: 47 runs across 6 APT families
+
+### Directory Structure
+```
+~/Downloads/research/dataset/
+├── run-01-apt-1/
+│   ├── ds-logs-network_traffic-flow-default-run-01.jsonl
+│   ├── netflow-run-01.csv                              # Output
+│   └── log-network-traffic-JSONL-to-csv-run-01.json   # Processing metadata
+├── run-02-apt-1/
+├── ...
+└── run-47-apt-6/
+```
 
 ---
 *This script processes network flow telemetry into structured datasets essential for dual-domain cybersecurity analysis, enabling correlation between host-level activities and resulting network communications in APT attack scenarios.*
